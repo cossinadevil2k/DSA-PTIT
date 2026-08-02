@@ -1,0 +1,174 @@
+' Đề số 05 - UML Code
+
+@startuml Sơ_đồ_lớp_thực_thể
+class GiaoVu {
+  - id: int
+  - hoTen: String
+  - password: String
+  - viTri: String
+}
+class SinhVien {
+  - id: int
+  - maSinhVien: String
+  - hoTen: String
+  - ngaySinh: Date
+  - lopKey: String
+  - queQuan: String
+  - diaChi: String
+}
+class MonHoc {
+  - id: int
+  - maMon: String
+  - tenMon: String
+  - soTinChi: int
+}
+class MonHocYeuCau {
+  - id: int
+  - monHocId: int
+  - monYeuCauId: int
+}
+class LopHocPhan {
+  - id: int
+  - maLop: String
+  - tenLop: String
+  - maxSV: int
+  - phongHoc: String
+  - khungGio: String
+  - maGV: int
+  - monHocId: int
+}
+class DangKyHoc {
+  - id: int
+  - sinhVienId: int
+  - lopHocPhanId: int
+  - ngayDangKy: Date
+}
+class KetQua {
+  - id: int
+  - sinhVienId: int
+  - monHocId: int
+  - lopHocPhanId: int
+  - diemCC: double
+  - diemBT: double
+  - diemTH: double
+  - diemThi: double
+  - diemTongKet: double
+}
+GiaoVu "1" -- "0..*" LopHocPhan
+SinhVien "1" -- "0..*" DangKyHoc
+LopHocPhan "1" -- "0..*" DangKyHoc
+MonHoc "1" -- "0..*" LopHocPhan
+MonHoc "1" -- "0..*" MonHocYeuCau
+SinhVien "1" -- "0..*" KetQua
+MonHoc "1" -- "0..*" KetQua
+@enduml
+
+@startuml Sơ_đồ_lớp_MVC
+class DAO {
+  ~ con: Connection
+  + DAO()
+}
+class TrangChuSVFrm {
+  + actionPerformed(e: ActionEvent): void
+}
+class DangKyHocFrm {
+  + actionPerformed(e: ActionEvent): void
+}
+class LichHocLopHPFrm {
+  + actionPerformed(e: ActionEvent): void
+}
+class PhieuDangKyFrm {
+  + actionPerformed(e: ActionEvent): void
+}
+class SinhVienDAO {
+  + layDuLieu(): Object
+  + luuDuLieu(): boolean
+}
+DAO <|-- SinhVienDAO
+class MonHocDAO {
+  + layDuLieu(): Object
+  + luuDuLieu(): boolean
+}
+DAO <|-- MonHocDAO
+class LopHocPhanDAO {
+  + layDuLieu(): Object
+  + luuDuLieu(): boolean
+}
+DAO <|-- LopHocPhanDAO
+class GradeDAO {
+  + layDuLieu(): Object
+  + luuDuLieu(): boolean
+}
+DAO <|-- GradeDAO
+class GiaoVu {
+  - id: int
+}
+class SinhVien {
+  - id: int
+}
+class MonHoc {
+  - id: int
+}
+class MonHocYeuCau {
+  - id: int
+}
+class LopHocPhan {
+  - id: int
+}
+class DangKyHoc {
+  - id: int
+}
+class KetQua {
+  - id: int
+}
+TrangChuSVFrm ..> DangKyHocFrm
+DangKyHocFrm ..> LichHocLopHPFrm
+LichHocLopHPFrm ..> PhieuDangKyFrm
+DangKyHocFrm --> SinhVienDAO
+LichHocLopHPFrm --> MonHocDAO
+@enduml
+
+@startuml Sơ_đồ_tuần_tự
+actor "Giáo vụ" as User
+boundary TrangChuSVFrm
+boundary DangKyHocFrm
+boundary LichHocLopHPFrm
+boundary PhieuDangKyFrm
+control SinhVienDAO
+control MonHocDAO
+database CSDL
+User -> TrangChuSVFrm : Chọn chức năng "Lên lịch học cho lớp học phần"
+activate TrangChuSVFrm
+TrangChuSVFrm -> DangKyHocFrm : new DangKyHocFrm()
+activate DangKyHocFrm
+DangKyHocFrm --> User : hiển thị biểu mẫu nhập dữ liệu
+deactivate TrangChuSVFrm
+User -> DangKyHocFrm : Nhập khóa tra cứu và click tìm kiếm
+DangKyHocFrm -> SinhVienDAO : timKiemTheoMa(ma)
+activate SinhVienDAO
+SinhVienDAO -> CSDL : SELECT chi tiết đối tượng
+activate CSDL
+CSDL --> SinhVienDAO : Trả kết quả về
+deactivate CSDL
+SinhVienDAO --> DangKyHocFrm : Trả về đối tượng Entity
+deactivate SinhVienDAO
+DangKyHocFrm -> LichHocLopHPFrm : new LichHocLopHPFrm(Entity)
+activate LichHocLopHPFrm
+LichHocLopHPFrm --> User : hiển thị chi tiết màn hình nghiệp vụ chính
+deactivate DangKyHocFrm
+User -> LichHocLopHPFrm : Bấm nút Xác nhận lưu giao dịch
+LichHocLopHPFrm -> MonHocDAO : themGiaoDich(data)
+activate MonHocDAO
+MonHocDAO -> CSDL : INSERT/UPDATE dữ liệu mới
+activate CSDL
+CSDL --> MonHocDAO : Lưu thành công
+deactivate CSDL
+MonHocDAO --> LichHocLopHPFrm : Trả về Success = true
+deactivate MonHocDAO
+LichHocLopHPFrm -> PhieuDangKyFrm : new PhieuDangKyFrm()
+activate PhieuDangKyFrm
+PhieuDangKyFrm --> User : hiển thị hóa đơn kết quả và in phiếu
+deactivate PhieuDangKyFrm
+LichHocLopHPFrm --> User : Thông báo thành công
+deactivate LichHocLopHPFrm
+@enduml

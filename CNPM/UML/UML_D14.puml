@@ -1,0 +1,164 @@
+' Đề số 14 - UML Code
+
+@startuml Sơ_đồ_lớp_thực_thể
+class NhanVien {
+  - id: int
+  - hoTen: String
+  - password: String
+  - chucVu: String
+}
+class KhachHang {
+  - id: int
+  - maKhachHang: String
+  - hoTen: String
+  - soID: String
+  - loaiID: String
+  - dienThoai: String
+  - email: String
+  - diaChi: String
+}
+class Tour {
+  - id: int
+  - maTour: String
+  - tenTour: String
+  - noiXuatPhat: String
+  - noiDen: String
+  - moTa: String
+}
+class LichTrinhTour {
+  - id: int
+  - tourId: int
+  - ngayXuatPhat: Date
+  - soChoTrong: int
+  - giaTour: double
+}
+class HoaDonDatTour {
+  - id: int
+  - khachHangId: int
+  - lichTrinhId: int
+  - ngayDat: Date
+  - soVe: int
+  - tenKhachDaiDien: String
+  - tongTien: double
+  - trangThai: String
+}
+class PhieuHuyTour {
+  - id: int
+  - hoaDonId: int
+  - ngayHuy: Date
+  - tienHoan: double
+  - tienPhat: double
+}
+class DiaDiemDen {
+  - id: int
+  - tenDiaDiem: String
+  - moTa: String
+}
+NhanVien "1" -- "0..*" HoaDonDatTour
+KhachHang "1" -- "0..*" HoaDonDatTour
+LichTrinhTour "1" -- "0..*" HoaDonDatTour
+Tour "1" *-- "0..*" LichTrinhTour
+HoaDonDatTour "1" -- "0..1" PhieuHuyTour
+Tour "1" -- "0..*" DiaDiemDen
+@enduml
+
+@startuml Sơ_đồ_lớp_MVC
+class DAO {
+  ~ con: Connection
+  + DAO()
+}
+class TrangChuFrm {
+  + actionPerformed(e: ActionEvent): void
+}
+class ThốngkêdoanhthutheođịađiểmFrm {
+  + actionPerformed(e: ActionEvent): void
+}
+class XacNhanThốngkêdoanhthutheođịađiểmFrm {
+  + actionPerformed(e: ActionEvent): void
+}
+class KhachHangDAO {
+  + layDuLieu(): Object
+  + luuDuLieu(): boolean
+}
+DAO <|-- KhachHangDAO
+class TourDAO {
+  + layDuLieu(): Object
+  + luuDuLieu(): boolean
+}
+DAO <|-- TourDAO
+class LichTrinhTourDAO {
+  + layDuLieu(): Object
+  + luuDuLieu(): boolean
+}
+DAO <|-- LichTrinhTourDAO
+class BookingDAO {
+  + layDuLieu(): Object
+  + luuDuLieu(): boolean
+}
+DAO <|-- BookingDAO
+class NhanVien {
+  - id: int
+}
+class KhachHang {
+  - id: int
+}
+class Tour {
+  - id: int
+}
+class LichTrinhTour {
+  - id: int
+}
+class HoaDonDatTour {
+  - id: int
+}
+class PhieuHuyTour {
+  - id: int
+}
+class DiaDiemDen {
+  - id: int
+}
+TrangChuFrm ..> ThốngkêdoanhthutheođịađiểmFrm
+ThốngkêdoanhthutheođịađiểmFrm ..> XacNhanThốngkêdoanhthutheođịađiểmFrm
+ThốngkêdoanhthutheođịađiểmFrm --> KhachHangDAO
+XacNhanThốngkêdoanhthutheođịađiểmFrm --> TourDAO
+@enduml
+
+@startuml Sơ_đồ_tuần_tự
+actor "Nhân viên" as User
+boundary TrangChuFrm
+boundary ThốngkêdoanhthutheođịađiểmFrm
+boundary XacNhanThốngkêdoanhthutheođịađiểmFrm
+control KhachHangDAO
+control TourDAO
+database CSDL
+User -> TrangChuFrm : Chọn chức năng "Thống kê doanh thu theo địa điểm"
+activate TrangChuFrm
+TrangChuFrm -> ThốngkêdoanhthutheođịađiểmFrm : new ThốngkêdoanhthutheođịađiểmFrm()
+activate ThốngkêdoanhthutheođịađiểmFrm
+ThốngkêdoanhthutheođịađiểmFrm --> User : hiển thị biểu mẫu nhập dữ liệu
+deactivate TrangChuFrm
+User -> ThốngkêdoanhthutheođịađiểmFrm : Nhập khóa tra cứu và click tìm kiếm
+ThốngkêdoanhthutheođịađiểmFrm -> KhachHangDAO : timKiemTheoMa(ma)
+activate KhachHangDAO
+KhachHangDAO -> CSDL : SELECT chi tiết đối tượng
+activate CSDL
+CSDL --> KhachHangDAO : Trả kết quả về
+deactivate CSDL
+KhachHangDAO --> ThốngkêdoanhthutheođịađiểmFrm : Trả về đối tượng Entity
+deactivate KhachHangDAO
+ThốngkêdoanhthutheođịađiểmFrm -> XacNhanThốngkêdoanhthutheođịađiểmFrm : new XacNhanThốngkêdoanhthutheođịađiểmFrm(Entity)
+activate XacNhanThốngkêdoanhthutheođịađiểmFrm
+XacNhanThốngkêdoanhthutheođịađiểmFrm --> User : hiển thị chi tiết màn hình nghiệp vụ chính
+deactivate ThốngkêdoanhthutheođịađiểmFrm
+User -> XacNhanThốngkêdoanhthutheođịađiểmFrm : Bấm nút Xác nhận lưu giao dịch
+XacNhanThốngkêdoanhthutheođịađiểmFrm -> TourDAO : themGiaoDich(data)
+activate TourDAO
+TourDAO -> CSDL : INSERT/UPDATE dữ liệu mới
+activate CSDL
+CSDL --> TourDAO : Lưu thành công
+deactivate CSDL
+TourDAO --> XacNhanThốngkêdoanhthutheođịađiểmFrm : Trả về Success = true
+deactivate TourDAO
+XacNhanThốngkêdoanhthutheođịađiểmFrm --> User : Thông báo thành công
+deactivate XacNhanThốngkêdoanhthutheođịađiểmFrm
+@enduml

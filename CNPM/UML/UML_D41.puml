@@ -1,0 +1,137 @@
+' Đề số 41 - UML Code
+
+@startuml Sơ_đồ_lớp_thực_thể
+class NhanVien {
+  - id: int
+  - hoTen: String
+  - password: String
+  - chucVu: String
+}
+class KhachHang {
+  - id: int
+  - maKhach: String
+  - hoTen: String
+  - dienThoai: String
+  - diaChi: String
+}
+class MatHang {
+  - id: int
+  - maHang: String
+  - tenHang: String
+  - giaBan: double
+  - soLuong: int
+}
+class GiaoDich {
+  - id: int
+  - khachHangId: int
+  - nhanVienId: int
+  - ngayLap: Date
+  - tongTien: double
+}
+class ChiTietGiaoDich {
+  - id: int
+  - giaoDichId: int
+  - matHangId: int
+  - soLuong: int
+  - donGia: double
+}
+KhachHang "1" -- "0..*" GiaoDich
+NhanVien "1" -- "0..*" GiaoDich
+GiaoDich "1" *-- "0..*" ChiTietGiaoDich
+ChiTietGiaoDich "0..*" -- "1" MatHang
+@enduml
+
+@startuml Sơ_đồ_lớp_MVC
+class DAO {
+  ~ con: Connection
+  + DAO()
+}
+class TrangChuFrm {
+  + actionPerformed(e: ActionEvent): void
+}
+class Checkin/CheckoutFrm {
+  + actionPerformed(e: ActionEvent): void
+}
+class XacNhanCheckin/CheckoutFrm {
+  + actionPerformed(e: ActionEvent): void
+}
+class KhachHangDAO {
+  + layDuLieu(): Object
+  + luuDuLieu(): boolean
+}
+DAO <|-- KhachHangDAO
+class MatHangDAO {
+  + layDuLieu(): Object
+  + luuDuLieu(): boolean
+}
+DAO <|-- MatHangDAO
+class GiaoDichDAO {
+  + layDuLieu(): Object
+  + luuDuLieu(): boolean
+}
+DAO <|-- GiaoDichDAO
+class ChiTietGiaoDichDAO {
+  + layDuLieu(): Object
+  + luuDuLieu(): boolean
+}
+DAO <|-- ChiTietGiaoDichDAO
+class NhanVien {
+  - id: int
+}
+class KhachHang {
+  - id: int
+}
+class MatHang {
+  - id: int
+}
+class GiaoDich {
+  - id: int
+}
+class ChiTietGiaoDich {
+  - id: int
+}
+TrangChuFrm ..> Checkin/CheckoutFrm
+Checkin/CheckoutFrm ..> XacNhanCheckin/CheckoutFrm
+Checkin/CheckoutFrm --> KhachHangDAO
+XacNhanCheckin/CheckoutFrm --> MatHangDAO
+@enduml
+
+@startuml Sơ_đồ_tuần_tự
+actor "Nhân viên" as User
+boundary TrangChuFrm
+boundary Checkin/CheckoutFrm
+boundary XacNhanCheckin/CheckoutFrm
+control KhachHangDAO
+control MatHangDAO
+database CSDL
+User -> TrangChuFrm : Chọn chức năng "Checkin/Checkout"
+activate TrangChuFrm
+TrangChuFrm -> Checkin/CheckoutFrm : new Checkin/CheckoutFrm()
+activate Checkin/CheckoutFrm
+Checkin/CheckoutFrm --> User : hiển thị biểu mẫu nhập dữ liệu
+deactivate TrangChuFrm
+User -> Checkin/CheckoutFrm : Nhập khóa tra cứu và click tìm kiếm
+Checkin/CheckoutFrm -> KhachHangDAO : timKiemTheoMa(ma)
+activate KhachHangDAO
+KhachHangDAO -> CSDL : SELECT chi tiết đối tượng
+activate CSDL
+CSDL --> KhachHangDAO : Trả kết quả về
+deactivate CSDL
+KhachHangDAO --> Checkin/CheckoutFrm : Trả về đối tượng Entity
+deactivate KhachHangDAO
+Checkin/CheckoutFrm -> XacNhanCheckin/CheckoutFrm : new XacNhanCheckin/CheckoutFrm(Entity)
+activate XacNhanCheckin/CheckoutFrm
+XacNhanCheckin/CheckoutFrm --> User : hiển thị chi tiết màn hình nghiệp vụ chính
+deactivate Checkin/CheckoutFrm
+User -> XacNhanCheckin/CheckoutFrm : Bấm nút Xác nhận lưu giao dịch
+XacNhanCheckin/CheckoutFrm -> MatHangDAO : themGiaoDich(data)
+activate MatHangDAO
+MatHangDAO -> CSDL : INSERT/UPDATE dữ liệu mới
+activate CSDL
+CSDL --> MatHangDAO : Lưu thành công
+deactivate CSDL
+MatHangDAO --> XacNhanCheckin/CheckoutFrm : Trả về Success = true
+deactivate MatHangDAO
+XacNhanCheckin/CheckoutFrm --> User : Thông báo thành công
+deactivate XacNhanCheckin/CheckoutFrm
+@enduml

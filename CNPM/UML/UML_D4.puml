@@ -1,0 +1,152 @@
+' Đề số 04 - UML Code
+
+@startuml Sơ_đồ_lớp_thực_thể
+class ThuThu {
+  - id: int
+  - hoTen: String
+  - password: String
+  - viTri: String
+}
+class SinhVien {
+  - id: int
+  - maDocGia: String
+  - hoTen: String
+  - ngaySinh: Date
+  - dienThoai: String
+  - maVach: String
+}
+class Sach {
+  - id: int
+  - maSach: int
+  - tenSach: String
+  - tacGia: String
+  - namXB: int
+  - gia: double
+  - soLuong: int
+  - moTa: String
+}
+class PhieuMuon {
+  - id: int
+  - maPhieuMuon: String
+  - ngayMuon: Date
+  - idNguoiTao: int
+  - idDocGia: int
+}
+class ChiTietPhieuMuon {
+  - id: int
+  - idPhieuMuon: int
+  - ngayPhaiTra: Date
+  - ngayTra: Date
+  - idSach: int
+  - tienPhat: double
+  - daTra: boolean
+}
+ThuThu "1" -- "0..*" PhieuMuon
+SinhVien "1" -- "0..*" PhieuMuon
+PhieuMuon "1" *-- "0..*" ChiTietPhieuMuon
+ChiTietPhieuMuon "0..*" -- "1" Sach
+@enduml
+
+@startuml Sơ_đồ_lớp_MVC
+class DAO {
+  ~ con: Connection
+  + DAO()
+}
+class TrangChuThuThuFrm {
+  + actionPerformed(e: ActionEvent): void
+}
+class TimKiemDocGiaFrm {
+  + actionPerformed(e: ActionEvent): void
+}
+class ChoMuonSachFrm {
+  + actionPerformed(e: ActionEvent): void
+}
+class PhieuMuonFrm {
+  + actionPerformed(e: ActionEvent): void
+}
+class SinhVienDAO {
+  + layDuLieu(): Object
+  + luuDuLieu(): boolean
+}
+DAO <|-- SinhVienDAO
+class SachDAO {
+  + layDuLieu(): Object
+  + luuDuLieu(): boolean
+}
+DAO <|-- SachDAO
+class PhieuMuonDAO {
+  + layDuLieu(): Object
+  + luuDuLieu(): boolean
+}
+DAO <|-- PhieuMuonDAO
+class ChiTietPhieuMuonDAO {
+  + layDuLieu(): Object
+  + luuDuLieu(): boolean
+}
+DAO <|-- ChiTietPhieuMuonDAO
+class ThuThu {
+  - id: int
+}
+class SinhVien {
+  - id: int
+}
+class Sach {
+  - id: int
+}
+class PhieuMuon {
+  - id: int
+}
+class ChiTietPhieuMuon {
+  - id: int
+}
+TrangChuThuThuFrm ..> TimKiemDocGiaFrm
+TimKiemDocGiaFrm ..> ChoMuonSachFrm
+ChoMuonSachFrm ..> PhieuMuonFrm
+TimKiemDocGiaFrm --> SinhVienDAO
+ChoMuonSachFrm --> SachDAO
+@enduml
+
+@startuml Sơ_đồ_tuần_tự
+actor "Thủ thư" as User
+boundary TrangChuThuThuFrm
+boundary TimKiemDocGiaFrm
+boundary ChoMuonSachFrm
+boundary PhieuMuonFrm
+control SinhVienDAO
+control SachDAO
+database CSDL
+User -> TrangChuThuThuFrm : Chọn chức năng "Thống kê độc giả mượn nhiều"
+activate TrangChuThuThuFrm
+TrangChuThuThuFrm -> TimKiemDocGiaFrm : new TimKiemDocGiaFrm()
+activate TimKiemDocGiaFrm
+TimKiemDocGiaFrm --> User : hiển thị biểu mẫu nhập dữ liệu
+deactivate TrangChuThuThuFrm
+User -> TimKiemDocGiaFrm : Nhập khóa tra cứu và click tìm kiếm
+TimKiemDocGiaFrm -> SinhVienDAO : timKiemTheoMa(ma)
+activate SinhVienDAO
+SinhVienDAO -> CSDL : SELECT chi tiết đối tượng
+activate CSDL
+CSDL --> SinhVienDAO : Trả kết quả về
+deactivate CSDL
+SinhVienDAO --> TimKiemDocGiaFrm : Trả về đối tượng Entity
+deactivate SinhVienDAO
+TimKiemDocGiaFrm -> ChoMuonSachFrm : new ChoMuonSachFrm(Entity)
+activate ChoMuonSachFrm
+ChoMuonSachFrm --> User : hiển thị chi tiết màn hình nghiệp vụ chính
+deactivate TimKiemDocGiaFrm
+User -> ChoMuonSachFrm : Bấm nút Xác nhận lưu giao dịch
+ChoMuonSachFrm -> SachDAO : themGiaoDich(data)
+activate SachDAO
+SachDAO -> CSDL : INSERT/UPDATE dữ liệu mới
+activate CSDL
+CSDL --> SachDAO : Lưu thành công
+deactivate CSDL
+SachDAO --> ChoMuonSachFrm : Trả về Success = true
+deactivate SachDAO
+ChoMuonSachFrm -> PhieuMuonFrm : new PhieuMuonFrm()
+activate PhieuMuonFrm
+PhieuMuonFrm --> User : hiển thị hóa đơn kết quả và in phiếu
+deactivate PhieuMuonFrm
+ChoMuonSachFrm --> User : Thông báo thành công
+deactivate ChoMuonSachFrm
+@enduml

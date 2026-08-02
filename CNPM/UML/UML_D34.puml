@@ -1,0 +1,137 @@
+' Đề số 34 - UML Code
+
+@startuml Sơ_đồ_lớp_thực_thể
+class NhanVien {
+  - id: int
+  - hoTen: String
+  - password: String
+  - chucVu: String
+}
+class KhachHang {
+  - id: int
+  - maKhach: String
+  - hoTen: String
+  - dienThoai: String
+  - diaChi: String
+}
+class MatHang {
+  - id: int
+  - maHang: String
+  - tenHang: String
+  - giaBan: double
+  - soLuong: int
+}
+class GiaoDich {
+  - id: int
+  - khachHangId: int
+  - nhanVienId: int
+  - ngayLap: Date
+  - tongTien: double
+}
+class ChiTietGiaoDich {
+  - id: int
+  - giaoDichId: int
+  - matHangId: int
+  - soLuong: int
+  - donGia: double
+}
+KhachHang "1" -- "0..*" GiaoDich
+NhanVien "1" -- "0..*" GiaoDich
+GiaoDich "1" *-- "0..*" ChiTietGiaoDich
+ChiTietGiaoDich "0..*" -- "1" MatHang
+@enduml
+
+@startuml Sơ_đồ_lớp_MVC
+class DAO {
+  ~ con: Connection
+  + DAO()
+}
+class TrangChuFrm {
+  + actionPerformed(e: ActionEvent): void
+}
+class ChothuêtruyệnFrm {
+  + actionPerformed(e: ActionEvent): void
+}
+class XacNhanChothuêtruyệnFrm {
+  + actionPerformed(e: ActionEvent): void
+}
+class KhachHangDAO {
+  + layDuLieu(): Object
+  + luuDuLieu(): boolean
+}
+DAO <|-- KhachHangDAO
+class MatHangDAO {
+  + layDuLieu(): Object
+  + luuDuLieu(): boolean
+}
+DAO <|-- MatHangDAO
+class GiaoDichDAO {
+  + layDuLieu(): Object
+  + luuDuLieu(): boolean
+}
+DAO <|-- GiaoDichDAO
+class ChiTietGiaoDichDAO {
+  + layDuLieu(): Object
+  + luuDuLieu(): boolean
+}
+DAO <|-- ChiTietGiaoDichDAO
+class NhanVien {
+  - id: int
+}
+class KhachHang {
+  - id: int
+}
+class MatHang {
+  - id: int
+}
+class GiaoDich {
+  - id: int
+}
+class ChiTietGiaoDich {
+  - id: int
+}
+TrangChuFrm ..> ChothuêtruyệnFrm
+ChothuêtruyệnFrm ..> XacNhanChothuêtruyệnFrm
+ChothuêtruyệnFrm --> KhachHangDAO
+XacNhanChothuêtruyệnFrm --> MatHangDAO
+@enduml
+
+@startuml Sơ_đồ_tuần_tự
+actor "Nhân viên" as User
+boundary TrangChuFrm
+boundary ChothuêtruyệnFrm
+boundary XacNhanChothuêtruyệnFrm
+control KhachHangDAO
+control MatHangDAO
+database CSDL
+User -> TrangChuFrm : Chọn chức năng "Cho thuê truyện"
+activate TrangChuFrm
+TrangChuFrm -> ChothuêtruyệnFrm : new ChothuêtruyệnFrm()
+activate ChothuêtruyệnFrm
+ChothuêtruyệnFrm --> User : hiển thị biểu mẫu nhập dữ liệu
+deactivate TrangChuFrm
+User -> ChothuêtruyệnFrm : Nhập khóa tra cứu và click tìm kiếm
+ChothuêtruyệnFrm -> KhachHangDAO : timKiemTheoMa(ma)
+activate KhachHangDAO
+KhachHangDAO -> CSDL : SELECT chi tiết đối tượng
+activate CSDL
+CSDL --> KhachHangDAO : Trả kết quả về
+deactivate CSDL
+KhachHangDAO --> ChothuêtruyệnFrm : Trả về đối tượng Entity
+deactivate KhachHangDAO
+ChothuêtruyệnFrm -> XacNhanChothuêtruyệnFrm : new XacNhanChothuêtruyệnFrm(Entity)
+activate XacNhanChothuêtruyệnFrm
+XacNhanChothuêtruyệnFrm --> User : hiển thị chi tiết màn hình nghiệp vụ chính
+deactivate ChothuêtruyệnFrm
+User -> XacNhanChothuêtruyệnFrm : Bấm nút Xác nhận lưu giao dịch
+XacNhanChothuêtruyệnFrm -> MatHangDAO : themGiaoDich(data)
+activate MatHangDAO
+MatHangDAO -> CSDL : INSERT/UPDATE dữ liệu mới
+activate CSDL
+CSDL --> MatHangDAO : Lưu thành công
+deactivate CSDL
+MatHangDAO --> XacNhanChothuêtruyệnFrm : Trả về Success = true
+deactivate MatHangDAO
+XacNhanChothuêtruyệnFrm --> User : Thông báo thành công
+deactivate XacNhanChothuêtruyệnFrm
+@enduml

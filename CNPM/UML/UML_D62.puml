@@ -1,0 +1,137 @@
+' Đề số 62 - UML Code
+
+@startuml Sơ_đồ_lớp_thực_thể
+class NhanVien {
+  - id: int
+  - hoTen: String
+  - password: String
+  - chucVu: String
+}
+class KhachHang {
+  - id: int
+  - maKhach: String
+  - hoTen: String
+  - dienThoai: String
+  - diaChi: String
+}
+class MatHang {
+  - id: int
+  - maHang: String
+  - tenHang: String
+  - giaBan: double
+  - soLuong: int
+}
+class GiaoDich {
+  - id: int
+  - khachHangId: int
+  - nhanVienId: int
+  - ngayLap: Date
+  - tongTien: double
+}
+class ChiTietGiaoDich {
+  - id: int
+  - giaoDichId: int
+  - matHangId: int
+  - soLuong: int
+  - donGia: double
+}
+KhachHang "1" -- "0..*" GiaoDich
+NhanVien "1" -- "0..*" GiaoDich
+GiaoDich "1" *-- "0..*" ChiTietGiaoDich
+ChiTietGiaoDich "0..*" -- "1" MatHang
+@enduml
+
+@startuml Sơ_đồ_lớp_MVC
+class DAO {
+  ~ con: Connection
+  + DAO()
+}
+class TrangChuFrm {
+  + actionPerformed(e: ActionEvent): void
+}
+class NhậptrangphụcFrm {
+  + actionPerformed(e: ActionEvent): void
+}
+class XacNhanNhậptrangphụcFrm {
+  + actionPerformed(e: ActionEvent): void
+}
+class KhachHangDAO {
+  + layDuLieu(): Object
+  + luuDuLieu(): boolean
+}
+DAO <|-- KhachHangDAO
+class MatHangDAO {
+  + layDuLieu(): Object
+  + luuDuLieu(): boolean
+}
+DAO <|-- MatHangDAO
+class GiaoDichDAO {
+  + layDuLieu(): Object
+  + luuDuLieu(): boolean
+}
+DAO <|-- GiaoDichDAO
+class ChiTietGiaoDichDAO {
+  + layDuLieu(): Object
+  + luuDuLieu(): boolean
+}
+DAO <|-- ChiTietGiaoDichDAO
+class NhanVien {
+  - id: int
+}
+class KhachHang {
+  - id: int
+}
+class MatHang {
+  - id: int
+}
+class GiaoDich {
+  - id: int
+}
+class ChiTietGiaoDich {
+  - id: int
+}
+TrangChuFrm ..> NhậptrangphụcFrm
+NhậptrangphụcFrm ..> XacNhanNhậptrangphụcFrm
+NhậptrangphụcFrm --> KhachHangDAO
+XacNhanNhậptrangphụcFrm --> MatHangDAO
+@enduml
+
+@startuml Sơ_đồ_tuần_tự
+actor "Nhân viên" as User
+boundary TrangChuFrm
+boundary NhậptrangphụcFrm
+boundary XacNhanNhậptrangphụcFrm
+control KhachHangDAO
+control MatHangDAO
+database CSDL
+User -> TrangChuFrm : Chọn chức năng "Nhập trang phục"
+activate TrangChuFrm
+TrangChuFrm -> NhậptrangphụcFrm : new NhậptrangphụcFrm()
+activate NhậptrangphụcFrm
+NhậptrangphụcFrm --> User : hiển thị biểu mẫu nhập dữ liệu
+deactivate TrangChuFrm
+User -> NhậptrangphụcFrm : Nhập khóa tra cứu và click tìm kiếm
+NhậptrangphụcFrm -> KhachHangDAO : timKiemTheoMa(ma)
+activate KhachHangDAO
+KhachHangDAO -> CSDL : SELECT chi tiết đối tượng
+activate CSDL
+CSDL --> KhachHangDAO : Trả kết quả về
+deactivate CSDL
+KhachHangDAO --> NhậptrangphụcFrm : Trả về đối tượng Entity
+deactivate KhachHangDAO
+NhậptrangphụcFrm -> XacNhanNhậptrangphụcFrm : new XacNhanNhậptrangphụcFrm(Entity)
+activate XacNhanNhậptrangphụcFrm
+XacNhanNhậptrangphụcFrm --> User : hiển thị chi tiết màn hình nghiệp vụ chính
+deactivate NhậptrangphụcFrm
+User -> XacNhanNhậptrangphụcFrm : Bấm nút Xác nhận lưu giao dịch
+XacNhanNhậptrangphụcFrm -> MatHangDAO : themGiaoDich(data)
+activate MatHangDAO
+MatHangDAO -> CSDL : INSERT/UPDATE dữ liệu mới
+activate CSDL
+CSDL --> MatHangDAO : Lưu thành công
+deactivate CSDL
+MatHangDAO --> XacNhanNhậptrangphụcFrm : Trả về Success = true
+deactivate MatHangDAO
+XacNhanNhậptrangphụcFrm --> User : Thông báo thành công
+deactivate XacNhanNhậptrangphụcFrm
+@enduml

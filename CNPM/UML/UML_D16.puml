@@ -1,0 +1,197 @@
+' Đề số 16 - UML Code
+
+@startuml Sơ_đồ_lớp_thực_thể
+class NhanVien {
+  - id: int
+  - hoTen: String
+  - password: String
+  - chucVu: String
+}
+class BanAn {
+  - id: int
+  - maBan: String
+  - tenBan: String
+  - maxKhach: int
+  - moTa: String
+  - daGop: boolean
+}
+class KhachHang {
+  - id: int
+  - maKhach: String
+  - hoTen: String
+  - dienThoai: String
+  - email: String
+  - diaChi: String
+}
+class MonAn {
+  - id: int
+  - maMon: String
+  - theLoai: String
+  - tenMon: String
+  - moTa: String
+  - giaHienTai: double
+}
+class ComboMon {
+  - id: int
+  - maCombo: String
+  - tenCombo: String
+  - moTa: String
+  - giaCombo: double
+}
+class ComboChiTiet {
+  - id: int
+  - comboId: int
+  - monAnId: int
+  - soLuong: int
+}
+class PhieuGoiMon {
+  - id: int
+  - banId: int
+  - khachHangId: int
+  - ngayGoi: Date
+  - trangThai: String
+}
+class ChiTietGoiMon {
+  - id: int
+  - phieuGoiId: int
+  - monAnId: int
+  - comboId: int
+  - soLuong: int
+  - giaBan: double
+}
+class HoaDonThanhToan {
+  - id: int
+  - phieuGoiId: int
+  - nhanVienId: int
+  - ngayThanhToan: Date
+  - maGiamGia: String
+  - tienGiam: double
+  - tongTienThanhToan: double
+}
+class PhieuGiamGia {
+  - id: int
+  - maGiamGia: String
+  - moTa: String
+  - phanTramGiam: double
+}
+BanAn "1" -- "0..*" PhieuGoiMon
+KhachHang "1" -- "0..*" PhieuGoiMon
+PhieuGoiMon "1" *-- "0..*" ChiTietGoiMon
+ChiTietGoiMon "0..*" -- "0..1" MonAn
+ChiTietGoiMon "0..*" -- "0..1" ComboMon
+ComboMon "1" *-- "0..*" ComboChiTiet
+ComboChiTiet "0..*" -- "1" MonAn
+PhieuGoiMon "1" -- "1" HoaDonThanhToan
+NhanVien "1" -- "0..*" HoaDonThanhToan
+HoaDonThanhToan "0..*" -- "0..1" PhieuGiamGia
+@enduml
+
+@startuml Sơ_đồ_lớp_MVC
+class DAO {
+  ~ con: Connection
+  + DAO()
+}
+class TrangChuFrm {
+  + actionPerformed(e: ActionEvent): void
+}
+class ĐặtbànFrm {
+  + actionPerformed(e: ActionEvent): void
+}
+class XacNhanĐặtbànFrm {
+  + actionPerformed(e: ActionEvent): void
+}
+class TableDAO {
+  + layDuLieu(): Object
+  + luuDuLieu(): boolean
+}
+DAO <|-- TableDAO
+class FoodItemDAO {
+  + layDuLieu(): Object
+  + luuDuLieu(): boolean
+}
+DAO <|-- FoodItemDAO
+class OrderDAO {
+  + layDuLieu(): Object
+  + luuDuLieu(): boolean
+}
+DAO <|-- OrderDAO
+class BillDAO {
+  + layDuLieu(): Object
+  + luuDuLieu(): boolean
+}
+DAO <|-- BillDAO
+class NhanVien {
+  - id: int
+}
+class BanAn {
+  - id: int
+}
+class KhachHang {
+  - id: int
+}
+class MonAn {
+  - id: int
+}
+class ComboMon {
+  - id: int
+}
+class ComboChiTiet {
+  - id: int
+}
+class PhieuGoiMon {
+  - id: int
+}
+class ChiTietGoiMon {
+  - id: int
+}
+class HoaDonThanhToan {
+  - id: int
+}
+class PhieuGiamGia {
+  - id: int
+}
+TrangChuFrm ..> ĐặtbànFrm
+ĐặtbànFrm ..> XacNhanĐặtbànFrm
+ĐặtbànFrm --> TableDAO
+XacNhanĐặtbànFrm --> FoodItemDAO
+@enduml
+
+@startuml Sơ_đồ_tuần_tự
+actor "Nhân viên phục vụ" as User
+boundary TrangChuFrm
+boundary ĐặtbànFrm
+boundary XacNhanĐặtbànFrm
+control TableDAO
+control FoodItemDAO
+database CSDL
+User -> TrangChuFrm : Chọn chức năng "Đặt bàn"
+activate TrangChuFrm
+TrangChuFrm -> ĐặtbànFrm : new ĐặtbànFrm()
+activate ĐặtbànFrm
+ĐặtbànFrm --> User : hiển thị biểu mẫu nhập dữ liệu
+deactivate TrangChuFrm
+User -> ĐặtbànFrm : Nhập khóa tra cứu và click tìm kiếm
+ĐặtbànFrm -> TableDAO : timKiemTheoMa(ma)
+activate TableDAO
+TableDAO -> CSDL : SELECT chi tiết đối tượng
+activate CSDL
+CSDL --> TableDAO : Trả kết quả về
+deactivate CSDL
+TableDAO --> ĐặtbànFrm : Trả về đối tượng Entity
+deactivate TableDAO
+ĐặtbànFrm -> XacNhanĐặtbànFrm : new XacNhanĐặtbànFrm(Entity)
+activate XacNhanĐặtbànFrm
+XacNhanĐặtbànFrm --> User : hiển thị chi tiết màn hình nghiệp vụ chính
+deactivate ĐặtbànFrm
+User -> XacNhanĐặtbànFrm : Bấm nút Xác nhận lưu giao dịch
+XacNhanĐặtbànFrm -> FoodItemDAO : themGiaoDich(data)
+activate FoodItemDAO
+FoodItemDAO -> CSDL : INSERT/UPDATE dữ liệu mới
+activate CSDL
+CSDL --> FoodItemDAO : Lưu thành công
+deactivate CSDL
+FoodItemDAO --> XacNhanĐặtbànFrm : Trả về Success = true
+deactivate FoodItemDAO
+XacNhanĐặtbànFrm --> User : Thông báo thành công
+deactivate XacNhanĐặtbànFrm
+@enduml

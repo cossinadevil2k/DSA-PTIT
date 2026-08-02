@@ -1,0 +1,137 @@
+' Đề số 55 - UML Code
+
+@startuml Sơ_đồ_lớp_thực_thể
+class NhanVien {
+  - id: int
+  - hoTen: String
+  - password: String
+  - chucVu: String
+}
+class KhachHang {
+  - id: int
+  - maKhach: String
+  - hoTen: String
+  - dienThoai: String
+  - diaChi: String
+}
+class MatHang {
+  - id: int
+  - maHang: String
+  - tenHang: String
+  - giaBan: double
+  - soLuong: int
+}
+class GiaoDich {
+  - id: int
+  - khachHangId: int
+  - nhanVienId: int
+  - ngayLap: Date
+  - tongTien: double
+}
+class ChiTietGiaoDich {
+  - id: int
+  - giaoDichId: int
+  - matHangId: int
+  - soLuong: int
+  - donGia: double
+}
+KhachHang "1" -- "0..*" GiaoDich
+NhanVien "1" -- "0..*" GiaoDich
+GiaoDich "1" *-- "0..*" ChiTietGiaoDich
+ChiTietGiaoDich "0..*" -- "1" MatHang
+@enduml
+
+@startuml Sơ_đồ_lớp_MVC
+class DAO {
+  ~ con: Connection
+  + DAO()
+}
+class TrangChuFrm {
+  + actionPerformed(e: ActionEvent): void
+}
+class ThốngkêkhunggiờđượcthuênhiềuFrm {
+  + actionPerformed(e: ActionEvent): void
+}
+class XacNhanThốngkêkhunggiờđượcthuênhiềuFrm {
+  + actionPerformed(e: ActionEvent): void
+}
+class KhachHangDAO {
+  + layDuLieu(): Object
+  + luuDuLieu(): boolean
+}
+DAO <|-- KhachHangDAO
+class MatHangDAO {
+  + layDuLieu(): Object
+  + luuDuLieu(): boolean
+}
+DAO <|-- MatHangDAO
+class GiaoDichDAO {
+  + layDuLieu(): Object
+  + luuDuLieu(): boolean
+}
+DAO <|-- GiaoDichDAO
+class ChiTietGiaoDichDAO {
+  + layDuLieu(): Object
+  + luuDuLieu(): boolean
+}
+DAO <|-- ChiTietGiaoDichDAO
+class NhanVien {
+  - id: int
+}
+class KhachHang {
+  - id: int
+}
+class MatHang {
+  - id: int
+}
+class GiaoDich {
+  - id: int
+}
+class ChiTietGiaoDich {
+  - id: int
+}
+TrangChuFrm ..> ThốngkêkhunggiờđượcthuênhiềuFrm
+ThốngkêkhunggiờđượcthuênhiềuFrm ..> XacNhanThốngkêkhunggiờđượcthuênhiềuFrm
+ThốngkêkhunggiờđượcthuênhiềuFrm --> KhachHangDAO
+XacNhanThốngkêkhunggiờđượcthuênhiềuFrm --> MatHangDAO
+@enduml
+
+@startuml Sơ_đồ_tuần_tự
+actor "Nhân viên" as User
+boundary TrangChuFrm
+boundary ThốngkêkhunggiờđượcthuênhiềuFrm
+boundary XacNhanThốngkêkhunggiờđượcthuênhiềuFrm
+control KhachHangDAO
+control MatHangDAO
+database CSDL
+User -> TrangChuFrm : Chọn chức năng "Thống kê khung giờ được thuê nhiều"
+activate TrangChuFrm
+TrangChuFrm -> ThốngkêkhunggiờđượcthuênhiềuFrm : new ThốngkêkhunggiờđượcthuênhiềuFrm()
+activate ThốngkêkhunggiờđượcthuênhiềuFrm
+ThốngkêkhunggiờđượcthuênhiềuFrm --> User : hiển thị biểu mẫu nhập dữ liệu
+deactivate TrangChuFrm
+User -> ThốngkêkhunggiờđượcthuênhiềuFrm : Nhập khóa tra cứu và click tìm kiếm
+ThốngkêkhunggiờđượcthuênhiềuFrm -> KhachHangDAO : timKiemTheoMa(ma)
+activate KhachHangDAO
+KhachHangDAO -> CSDL : SELECT chi tiết đối tượng
+activate CSDL
+CSDL --> KhachHangDAO : Trả kết quả về
+deactivate CSDL
+KhachHangDAO --> ThốngkêkhunggiờđượcthuênhiềuFrm : Trả về đối tượng Entity
+deactivate KhachHangDAO
+ThốngkêkhunggiờđượcthuênhiềuFrm -> XacNhanThốngkêkhunggiờđượcthuênhiềuFrm : new XacNhanThốngkêkhunggiờđượcthuênhiềuFrm(Entity)
+activate XacNhanThốngkêkhunggiờđượcthuênhiềuFrm
+XacNhanThốngkêkhunggiờđượcthuênhiềuFrm --> User : hiển thị chi tiết màn hình nghiệp vụ chính
+deactivate ThốngkêkhunggiờđượcthuênhiềuFrm
+User -> XacNhanThốngkêkhunggiờđượcthuênhiềuFrm : Bấm nút Xác nhận lưu giao dịch
+XacNhanThốngkêkhunggiờđượcthuênhiềuFrm -> MatHangDAO : themGiaoDich(data)
+activate MatHangDAO
+MatHangDAO -> CSDL : INSERT/UPDATE dữ liệu mới
+activate CSDL
+CSDL --> MatHangDAO : Lưu thành công
+deactivate CSDL
+MatHangDAO --> XacNhanThốngkêkhunggiờđượcthuênhiềuFrm : Trả về Success = true
+deactivate MatHangDAO
+XacNhanThốngkêkhunggiờđượcthuênhiềuFrm --> User : Thông báo thành công
+deactivate XacNhanThốngkêkhunggiờđượcthuênhiềuFrm
+@enduml
