@@ -1,0 +1,26 @@
+Bước 1 cấu hình cac router và sw
+enable
+configure terminal
+
+hostname SW60hot
+enable secret Cisco123! 
+
+line console 0
+ password Cisco123! 
+ login
+exit
+
+ip domain-name Ptit.com
+crypto key generate rsa general-keys modulus 1024
+username admin privilege 15 secret Admin@123
+
+line vty 0 4
+ login local
+ transport input ssh
+exit
+
+ip ssh version 2
+exit
+write memory
+ 
+

@@ -1,0 +1,409 @@
+1:CẤU HÌNH SW_INSIDE
+enable
+configure terminal
+
+!--- 1. Cấu hình cơ bản & Bảo mật
+hostname SW0-INSIDE
+enable secret Cisco123!
+
+line console 0
+ password Cisco123!
+ login
+ logging synchronous
+exit
+
+!--- 2. Cấu hình SSH
+ip domain-name Ptit.com
+crypto key generate rsa general-keys modulus 1024
+username admin privilege 15 secret Admin123@
+
+line vty 0 15
+ login local
+ transport input ssh
+exit
+
+!--- 3. Định tuyến Layer 3 & Tạo VLAN
+ip routing
+
+vlan 10
+ name LAN_PC0
+vlan 20
+ name LAN_PC1
+exit
+
+!--- 4. Gán cổng Access cho Client
+interface FastEthernet0/5
+ switchport mode access
+ switchport access vlan 10
+
+interface FastEthernet0/15
+ switchport mode access
+ switchport access vlan 20
+
+!--- 5. Cấu hình SVI (Gateway các VLAN)
+interface Vlan10
+ ip address 192.168.10.1 255.255.255.0
+ no shutdown
+
+interface Vlan20
+ ip address 192.168.20.1 255.255.255.0
+ no shutdown
+
+!--- 6. Cấu hình cổng kết nối lên ASA0 (Gig1/2)
+interface GigabitEthernet0/1
+ no switchport
+ ip address 10.10.10.2 255.255.255.252
+ no shutdown
+
+!--- 7. Cấu hình DHCP Server cho 2 VLAN
+ip dhcp excluded-address 192.168.10.1 192.168.10.10
+ip dhcp pool POOL_VLAN10
+ network 192.168.10.0 255.255.255.0
+ default-router 192.168.10.1
+ dns-server 10.10.20.2
+
+ip dhcp excluded-address 192.168.20.1 192.168.20.10
+ip dhcp pool POOL_VLAN20
+ network 192.168.20.0 255.255.255.0
+ default-router 192.168.20.1
+ dns-server 10.10.20.2
+
+!--- 8. Default Route trỏ lên ASA
+ip route 0.0.0.0 0.0.0.0 10.10.10.1
+exit
+
+write memory
+
+
+2. CẤU HÌNH ASA
+
+enable
+configure terminal
+
+
+hostname ASA0
+enable password Cisco123!
+passwd Cisco123!
+
+
+interface GigabitEthernet1/2
+ nameif inside
+ security-level 100
+ ip address 10.10.10.1 255.255.255.252
+ no shutdown
+
+interface GigabitEthernet1/3
+ nameif dmz
+ security-level 50
+ ip address 10.10.20.1 255.255.255.0
+ no shutdown
+
+interface GigabitEthernet1/1
+ nameif outside
+ security-level 0
+ ip address 10.0.0.1 255.255.255.252
+ no shutdown
+
+!--- 3. Cấu hình Định tuyến Tĩnh (Dùng 'route', không dùng 'ip route')
+route outside 0.0.0.0 0.0.0.0 10.0.0.2
+route inside 192.168.10.0 255.255.255.0 10.10.10.2
+route inside 192.168.20.0 255.255.255.0 10.10.10.2
+
+!--- 4. Dynamic NAT cho dải Inside ra Outside & DMZ
+object network INSIDE_VLAN10
+ subnet 192.168.10.0 255.255.255.0
+ nat (inside,outside) dynamic interface
+ nat (inside,dmz) dynamic interface
+
+object network INSIDE_VLAN20
+ subnet 192.168.20.0 255.255.255.0
+ nat (inside,outside) dynamic interface
+ nat (inside,dmz) dynamic interface
+
+!--- 5. Access Control List mở cổng cho Outside vào DMZ (Web/DNS/Ping)
+access-list OUTSIDE_TO_DMZ extended permit tcp any host 10.10.20.3 eq www
+access-list OUTSIDE_TO_DMZ extended permit udp any host 10.10.20.2 eq domain
+access-list OUTSIDE_TO_DMZ extended permit icmp any any
+access-group OUTSIDE_TO_DMZ in interface outside
+
+!--- 6. Bật Inspect ICMP & DNS
+policy-map global_policy
+ class inspection_default
+  inspect icmp
+  inspect dns
+
+!--- 7. Cấu hình SSH chuẩn ASA Packet Tracer
+domain-name Ptit.com
+crypto key generate rsa modulus 1024
+username admin password Admin123@
+
+ssh 192.168.10.0 255.255.255.0 inside
+ssh 192.168.20.0 255.255.255.0 inside
+ssh 10.10.10.0 255.255.255.0 inside
+ssh timeout 5
+exit
+
+write memory
+
+3.ROUTER OUTSIDE
+  
+enable
+configure terminal
+
+hostname Router0
+enable secret Cisco123!
+
+line console 0
+ password Cisco123!
+ login
+ logging synchronous
+exit
+
+ip domain-name Ptit.com
+crypto key generate rsa general-keys modulus 1024
+username admin privilege 15 secret Admin123@
+
+line vty 0 4
+ login local
+ transport input ssh
+exit
+
+ip ssh version 2
+
+!--- 3. Cấu hình Interface
+interface GigabitEthernet0/0
+ ip address 10.0.0.2 255.255.255.252
+ no shutdown
+
+interface FastEthernet0/1
+ ip address 10.0.0.5 255.255.255.0
+ no shutdown
+
+!--- 4. Định tuyến OSPF & Static Route
+router ospf 10
+ router-id 0.0.0.1
+ network 10.0.0.0 0.0.0.255 area 0
+ default-information originate
+exit
+
+ip route 0.0.0.0 0.0.0.0 10.0.0.1
+exit
+
+write memory
+
+4. ROUTER NHÁNH 100 HOT
+
+enable
+configure terminal
+
+hostname Router1
+enable secret Cisco123!
+
+line console 0
+ password Cisco123!
+ login
+exit
+
+ip domain-name Ptit.com
+crypto key generate rsa general-keys modulus 1024
+username admin privilege 15 secret Admin123@
+
+line vty 0 4
+ login local
+ transport input ssh
+exit
+
+ip ssh version 2
+
+!--- 3. Cấu hình DHCP Server (100 Hosts -> Subnet /25)
+ip dhcp excluded-address 172.16.1.1 172.16.1.10
+ip dhcp pool BRANCH_100HOSTS
+ network 172.16.1.0 255.255.255.128
+ default-router 172.16.1.1
+ dns-server 10.10.20.2
+
+!--- 4. Cấu hình Interface
+interface GigabitEthernet0/0
+ ip address 10.0.0.6 255.255.255.0
+ no shutdown
+
+interface GigabitEthernet0/1
+ ip address 172.16.1.1 255.255.255.128
+ no shutdown
+
+!--- 5. Định tuyến OSPF
+router ospf 10
+ router-id 1.1.1.1
+ network 10.0.0.0 0.0.0.255 area 0
+ network 172.16.1.0 0.0.0.127 area 0
+exit
+
+write memory
+
+
+5. ROUTER NHANH 60 HOT
+
+enable
+configure terminal
+
+
+hostname Router2
+enable secret Cisco123!
+
+line console 0
+ password Cisco123!
+ login
+exit
+
+ip domain-name Ptit.com
+crypto key generate rsa general-keys modulus 1024
+username admin privilege 15 secret Admin123@
+
+line vty 0 4
+ login local
+ transport input ssh
+exit
+
+ip ssh version 2
+
+!--- 3. Cấu hình DHCP Server (60 Hosts -> Subnet /26)
+ip dhcp excluded-address 172.16.2.1 172.16.2.10
+ip dhcp pool BRANCH_60HOSTS
+ network 172.16.2.0 255.255.255.192
+ default-router 172.16.2.1
+ dns-server 10.10.20.2
+
+!--- 4. Cấu hình Interface
+interface GigabitEthernet0/0
+ ip address 10.0.0.7 255.255.255.0
+ no shutdown
+
+interface GigabitEthernet0/1
+ ip address 172.16.2.1 255.255.255.192
+ no shutdown
+
+!--- 5. Định tuyến OSPF
+router ospf 10
+ router-id 2.2.2.2
+ network 10.0.0.0 0.0.0.255 area 0
+ network 172.16.2.0 0.0.0.63 area 0
+exit
+
+write memory
+
+6: SW KẾT NỐI 3 ROUTER
+
+enable
+configure terminal
+
+hostname Switch0-Outside
+enable secret Cisco123!
+
+
+line console 0
+ password Cisco123!
+ login
+exit
+
+
+ip domain-name Ptit.com
+crypto key generate rsa general-keys modulus 1024
+username admin privilege 15 secret Admin123@
+
+interface Vlan1
+ ip address 10.0.0.100 255.255.255.0
+ no shutdown
+
+ip default-gateway 10.0.0.5
+
+line vty 0 15
+ login local
+ transport input ssh
+exit
+
+ip ssh version 2
+
+interface range FastEthernet0/1-3
+ switchport mode access
+ switchport access vlan 1
+ no shutdown
+
+exit
+write memory
+
+7: SW SAU ROUTER 100 HOT
+
+enable
+configure terminal
+
+hostname Switch1-Branch100
+enable secret Cisco123!
+
+line console 0
+ password Cisco123!
+ login
+exit
+
+ip domain-name Ptit.com
+crypto key generate rsa general-keys modulus 1024
+username admin privilege 15 secret Admin123@
+
+interface Vlan1
+ ip address 172.16.1.2 255.255.255.128
+ no shutdown
+
+ip default-gateway 172.16.1.1
+
+line vty 0 15
+ login local
+ transport input ssh
+exit
+
+ip ssh version 2
+
+interface range FastEthernet0/1-24
+ switchport mode access
+ switchport access vlan 1
+ no shutdown
+
+exit
+write memory
+
+8: SW SAU ROUTER 60 HOT
+
+enable
+configure terminal
+
+hostname Switch2-Branch60
+enable secret Cisco123!
+
+line console 0
+ password Cisco123!
+ login
+exit
+
+ip domain-name Ptit.com
+crypto key generate rsa general-keys modulus 1024
+username admin privilege 15 secret Admin123@
+
+interface Vlan1
+ ip address 172.16.2.2 255.255.255.192
+ no shutdown
+
+ip default-gateway 172.16.2.1
+
+line vty 0 15
+ login local
+ transport input ssh
+exit
+
+ip ssh version 2
+
+
+interface range  FastEthernet0/1-24
+ switchport mode access
+ switchport access vlan 1
+ no shutdown
+
+exit
+write memory

@@ -1,0 +1,63 @@
+ena ( nhấn enter 2 lần) 
+
+conf t
+
+hostname ASA0
+ena pass Cisco123!
+pass Cisco123!
+
+int Gi1/2
+ nameif inside ( viet dung theo de)
+ sec 100
+ ip add 10.10.10.1 255.255.255.252
+ no shutdown
+
+int Gi1/3
+ nameif dmz
+ sec 50
+ ip address 10.10.20.1 255.255.255.0
+ no sh
+
+int Gi1/1
+ nameif outside
+ sec 0
+ ip add 10.0.0.1 255.255.255.252
+ no sh
+
+ route outside 0.0.0.0 0.0.0.0 10.0.0.2 ( Ten khu vuc viet theo dung da dat owr tren)
+ route inside 192.168.10.0 255.255.255.0 10.10.10.2
+ route inside 192.168.20.0 255.255.255.0 10.10.10.2
+
+object network INSIDE_VLAN10
+ subnet 192.168.10.0 255.255.255.0
+ nat (inside,outside) dyn int
+ nat (inside,dmz) dyn int
+
+object network INSIDE_VLAN20
+ subnet 192.168.20.0 255.255.255.0
+ nat (inside,outside) dyn int
+ nat (inside,dmz) dyn int
+
+#ACL
+access-list OUTSIDE_TO_DMZ extended permit tcp any host 10.10.20.3 eq www
+access-list OUTSIDE_TO_DMZ extended permit udp any host 10.10.20.2 eq domain
+access-list OUTSIDE_TO_DMZ extended permit icmp any any
+access-group OUTSIDE_TO_DMZ in interface outside
+
+
+policy-map global_policy
+ class inspection_default
+  inspect icmp
+  inspect dns
+
+#SSH
+domain-name Ptit.com
+crypto key generate rsa modulus 1024
+username admin password Admin123@
+
+ssh 192.168.10.0 255.255.255.0 inside
+ssh 192.168.20.0 255.255.255.0 inside
+ssh 10.10.10.0 255.255.255.0 inside
+ssh timeout 5
+
+write memory
